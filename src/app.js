@@ -3,7 +3,8 @@ const express = require('express')
 const hbs = require('hbs')
 const geocode = require('../utils/geocode')
 const weather = require('../utils/weather')
-
+const getLocation = require('../utils/location')
+const reverseGeo = require('../utils/reverseGeo')
 
 // define paths to Express config
 const app = express()
@@ -23,31 +24,41 @@ hbs.registerPartials(partialsPath)
 app.use(express.static(publicDir))
 
 app.get('', (req,res) => {
+
+    // getLocation((ipLocation) => {
+    //     // res.send(ipLocation)
+    //     console.log(ipLocation)
+    // })
+
     res.render('index',{
         title: 'Weather',
         name: 'Aurutis'
     })
 })
 
-app.get('/help', (req,res) => {
-    res.render('help',{
-        title: 'Help page',
-        name: 'Aurutis'
-    })
-})
 
-app.get('/about', (req,res) => {
-    res.render('about',{
-        title: 'About page',
-        name: 'Aurutis'
-    })
-})
+// navigator.geolocation.getCurrentPosition(function(position){
+//     console.log(position)
+// })
+
+// app.get('/help', (req,res) => {
+//     res.render('help',{
+//         title: 'Help page',
+//         name: 'Aurutis'
+//     })
+// })
+
+// app.get('/about', (req,res) => {
+//     res.render('about',{
+//         title: 'About page',
+//         name: 'Aurutis'
+//     })
+// })
+
 
 app.get('/weather',(req,res) => {
-    if(!req.query.location) {
-        return res.send('Error: you must provide a location')
-    }
-    geocode(req.query.location, (error,data = {}) => {
+
+    const getWeather = (location) => geocode(location, (error,data = {}) => {
         if(error) {
             return res.send('Error: you must provide an acceptable location')
         }
@@ -59,6 +70,30 @@ app.get('/weather',(req,res) => {
             res.send({summary, location,temp, constProb})
         })
     })
+
+    if(!req.query.lat && !req.query.long && !req.query.location) {
+        getLocation((callback) => getWeather(callback.body.city))
+        return
+    } else if(req.query.lat && req.query.long && !req.query.location ) {
+
+        reverseGeo(req.query.lat, req.query.long, (error, result) => {
+            if(error) {
+                return res.send('Error with location services')
+            }
+            getWeather(result.city)
+            return
+        })
+
+        // weather(data, (error,{summary, location, temp, constProb} = {}) => {
+        //     if(error) {
+        //         return res.send('Error: you must provide an acceptable location')
+        //     }
+        //     // res.send(`Today in ${location} it's ${temp} C and there is ${constProb} % chance of rain`)
+        //     res.send({summary, location,temp, constProb})
+        // })
+        return
+    }
+    getWeather(req.query.location)
     
 })
 
