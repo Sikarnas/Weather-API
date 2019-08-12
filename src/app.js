@@ -37,44 +37,26 @@ app.get('', (req,res) => {
 })
 
 
-// navigator.geolocation.getCurrentPosition(function(position){
-//     console.log(position)
-// })
-
-// app.get('/help', (req,res) => {
-//     res.render('help',{
-//         title: 'Help page',
-//         name: 'Aurutis'
-//     })
-// })
-
-// app.get('/about', (req,res) => {
-//     res.render('about',{
-//         title: 'About page',
-//         name: 'Aurutis'
-//     })
-// })
-
-
 app.get('/weather',(req,res) => {
 
     const getWeather = (location) => geocode(location, (error,data = {}) => {
         if(error) {
             return res.send('Error: you must provide an acceptable location')
         }
-        weather(data, (error,{summary, location, temp, constProb} = {}) => {
+        weather(data, (error,{info} = {}) => {
             if(error) {
                 return res.send('Error: you must provide an acceptable location')
             }
             // res.send(`Today in ${location} it's ${temp} C and there is ${constProb} % chance of rain`)
-            res.send({summary, location,temp, constProb})
+            res.send({...info})
         })
     })
 
-    if(!req.query.lat && !req.query.long && !req.query.location) {
-        getLocation((callback) => getWeather(callback.body.city))
-        return
-    } else if(req.query.lat && req.query.long && !req.query.location ) {
+    // if(!req.query.lat && !req.query.long && !req.query.location) {
+    //     getLocation((callback) => getWeather(callback.body.city))
+    //     return
+    // } else 
+        if(req.query.lat && req.query.long && !req.query.location ) {
 
         reverseGeo(req.query.lat, req.query.long, (error, result) => {
             if(error) {
@@ -84,30 +66,11 @@ app.get('/weather',(req,res) => {
             return
         })
 
-        // weather(data, (error,{summary, location, temp, constProb} = {}) => {
-        //     if(error) {
-        //         return res.send('Error: you must provide an acceptable location')
-        //     }
-        //     // res.send(`Today in ${location} it's ${temp} C and there is ${constProb} % chance of rain`)
-        //     res.send({summary, location,temp, constProb})
-        // })
         return
     }
     getWeather(req.query.location)
     
 })
-
-// app.get('/products',(req,res) => {
-//     if(!req.query.search) {
-//         return res.send({
-//             error: 'you must provide a search term'
-//         })
-//     }
-//     console.log(req.query)
-//     res.send({
-//         products: []
-//     })
-// })
 
 app.get('*', (req,res) => {
     res.render('404', {
